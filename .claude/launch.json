@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "acero-pipeline",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev"],
+      "cwd": "C:\\Dev\\projects\\acero-pipeline",
+      "port": 5173
+    }
+  ]
+}
