@@ -263,7 +263,7 @@ export function Asistente({ onAplicada }: { onAplicada: (tipo: string) => void }
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && enviar()}
-          placeholder='Ej. "Hazme una OC para Aceros Chula Vista: 1500 kg de varilla corrugada 5/8 a $16.80, pago a 30 días"'
+          placeholder='Ej. "Hazme una OC para Aceros del Norte: 1500 kg de varilla corrugada 5/8 a $16.80, pago a 30 días"'
           disabled={cargando}
         />
         <button className="primario" onClick={enviar} disabled={cargando || !texto.trim()}>
