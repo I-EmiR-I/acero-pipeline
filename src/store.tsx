@@ -6,7 +6,7 @@ export type { Accion, Estado, LineaOCEntrada } from './logic/reducer';
 
 interface Store {
   estado: Estado;
-  dispatch: (a: Accion) => void;
+  dispatch: (a: Accion) => Promise<Estado | null>;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -34,7 +34,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(t);
   }, [cargar]);
 
-  const dispatch = useCallback(async (a: Accion) => {
+  const dispatch = useCallback(async (a: Accion): Promise<Estado | null> => {
     ocupado.current = true;
     try {
       const r = await fetch('/api/accion', {
@@ -42,7 +42,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(a),
       });
-      if (r.ok) setEstado(await r.json());
+      if (r.ok) {
+        const nuevo = (await r.json()) as Estado;
+        setEstado(nuevo);
+        return nuevo;
+      }
+      return null;
     } finally {
       ocupado.current = false;
     }

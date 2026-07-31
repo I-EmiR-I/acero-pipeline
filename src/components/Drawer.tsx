@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Lead, OrdenCompra } from '../types';
 import { ETAPAS } from '../types';
 import { useStore } from '../store';
-import { conciliar, fmtFecha, fmtMoneda, montoOC } from '../reconcile';
+import { conciliar, fmtFecha, fmtMoneda } from '../reconcile';
 import { FormCotizacion, FormConfirmar, FormFactura, FormNota, FormOC } from './Forms';
 
 type Formulario = 'cotizacion' | 'confirmar' | 'oc' | 'factura' | 'nota' | null;
@@ -18,10 +18,10 @@ export function PanelLead({
 }) {
   const { dispatch } = useStore();
   const [form, setForm] = useState<Formulario>(null);
+  const [confirmarEliminar, setConfirmarEliminar] = useState(false);
   const estado = conciliar(lead);
   const parcial = estado !== null && !estado.completo && lead.facturas.length > 0 && lead.etapa !== 'cerrado';
   const etapaNombre = ETAPAS.find((e) => e.id === lead.etapa)?.nombre ?? lead.etapa;
-  const total = montoOC(lead);
 
   return (
     <div className="panel-fondo" onClick={onCerrar}>
@@ -82,6 +82,27 @@ export function PanelLead({
               </button>
             </>
           )}
+          {!confirmarEliminar ? (
+            <button className="peligro" onClick={() => setConfirmarEliminar(true)}>
+              Eliminar
+            </button>
+          ) : (
+            <>
+              <span style={{ alignSelf: 'center', fontSize: 13, color: 'var(--danger)' }}>
+                ¿Eliminar este lead de forma permanente?
+              </span>
+              <button onClick={() => setConfirmarEliminar(false)}>Cancelar</button>
+              <button
+                className="peligro"
+                onClick={() => {
+                  dispatch({ tipo: 'eliminar_lead', leadId: lead.id });
+                  onCerrar();
+                }}
+              >
+                Sí, eliminar
+              </button>
+            </>
+          )}
         </div>
 
         <h3>Productos solicitados</h3>
@@ -135,10 +156,9 @@ export function PanelLead({
               </div>
               <div className="muted">
                 {lead.ordenCompra.lineas
-                  .map((l) => `${l.producto}: ${l.cantidad} ${l.unidad} × ${fmtMoneda(l.precioUnitario)}`)
+                  .map((l) => `${l.cantidad} ${l.unidad} ${l.producto} (${fmtMoneda(l.precioUnitario)}/kg)`)
                   .join(' · ')}
               </div>
-              {total !== null && <div>Total: <strong>{fmtMoneda(total)}</strong></div>}
               <div className="muted">{fmtFecha(lead.ordenCompra.fecha)}</div>
             </div>
           </>

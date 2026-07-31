@@ -9,8 +9,9 @@ import { ListaOC } from './components/OCList';
 import { OCDoc } from './components/OCDoc';
 import { Sugerencias } from './components/Sugerencias';
 import { WhatsAppPanel } from './components/WhatsAppPanel';
+import { CrearOC } from './components/CrearOC';
 
-type Vista = 'tablero' | 'ordenes' | 'sugerencias' | 'whatsapp';
+type Vista = 'tablero' | 'ordenes' | 'crear_oc' | 'sugerencias' | 'whatsapp';
 
 function Contenido() {
   const { estado, dispatch } = useStore();
@@ -28,6 +29,9 @@ function Contenido() {
           <button className={vista === 'tablero' ? 'activa' : ''} onClick={() => setVista('tablero')}>
             Tablero
           </button>
+          <button className={vista === 'crear_oc' ? 'activa' : ''} onClick={() => setVista('crear_oc')}>
+            Crear OC
+          </button>
           <button className={vista === 'ordenes' ? 'activa' : ''} onClick={() => setVista('ordenes')}>
             Órdenes de compra
           </button>
@@ -42,21 +46,31 @@ function Contenido() {
           </button>
         </nav>
         <div className="acciones">
-          <button onClick={() => dispatch({ tipo: 'reiniciar_demo' })}>Reiniciar demo</button>
+          <button
+            onClick={() => {
+              if (confirm('¿Limpiar leads, órdenes y sugerencias? El catálogo de proveedores se conserva.'))
+                dispatch({ tipo: 'reiniciar_datos' });
+            }}
+          >
+            Limpiar datos
+          </button>
           <button className="primario" onClick={() => setNuevoAbierto(true)}>Nueva solicitud</button>
         </div>
       </header>
 
       {vista === 'tablero' && <Tablero onAbrir={setLeadAbierto} />}
+      {vista === 'crear_oc' && <CrearOC onCreada={setOcAbierta} />}
       {vista === 'ordenes' && <ListaOC onVer={setOcAbierta} />}
       {vista === 'sugerencias' && <Sugerencias />}
       {vista === 'whatsapp' && <WhatsAppPanel />}
 
-      <Asistente
-        onAplicada={(tipo) => {
-          if (tipo === 'crear_oc_directa' || tipo === 'emitir_oc') setVista('ordenes');
-        }}
-      />
+      {vista !== 'crear_oc' && (
+        <Asistente
+          onAplicada={(tipo) => {
+            if (tipo === 'crear_oc_directa' || tipo === 'emitir_oc') setVista('ordenes');
+          }}
+        />
+      )}
 
       {lead && (
         <PanelLead lead={lead} onCerrar={() => setLeadAbierto(null)} onVerOC={setOcAbierta} />

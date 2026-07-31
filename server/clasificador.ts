@@ -1,6 +1,6 @@
 import type { MensajeWA, Sugerencia } from '../src/types';
 
-const MODELO = 'gemini-2.5-flash';
+const MODELO = 'gemini-flash-lite-latest';
 const URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODELO}:generateContent`;
 
 /** Contexto de un lead abierto de este grupo, para que el modelo decida si actualizar. */

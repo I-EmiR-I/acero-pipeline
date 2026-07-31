@@ -1,7 +1,6 @@
 import type { OrdenCompra } from '../types';
 import { useStore } from '../store';
-import { fmtFecha, fmtMoneda } from '../reconcile';
-import { IVA_TASA } from '../empresa';
+import { fmtFecha } from '../reconcile';
 
 export interface OCConOrigen {
   oc: OrdenCompra;
@@ -32,24 +31,21 @@ export function ListaOC({ onVer }: { onVer: (oc: OrdenCompra) => void }) {
             <th>Proveedor</th>
             <th>Origen</th>
             <th>Fecha</th>
-            <th className="num">Total (c/IVA)</th>
+            <th className="num">Materiales</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          {ocs.map(({ oc, origen }) => {
-            const subtotal = oc.lineas.reduce((s, l) => s + l.cantidad * l.precioUnitario, 0);
-            return (
-              <tr key={oc.id}>
-                <td><strong>{oc.folio}</strong></td>
-                <td>{oc.proveedor}</td>
-                <td>{origen}</td>
-                <td>{fmtFecha(oc.fecha)}</td>
-                <td className="num">{fmtMoneda(subtotal * (1 + IVA_TASA))}</td>
-                <td><button className="mini" onClick={() => onVer(oc)}>Ver / imprimir</button></td>
-              </tr>
-            );
-          })}
+          {ocs.map(({ oc, origen }) => (
+            <tr key={oc.id}>
+              <td><strong>{oc.folio}</strong></td>
+              <td>{oc.proveedor}</td>
+              <td>{origen}</td>
+              <td>{fmtFecha(oc.fecha)}</td>
+              <td className="num">{oc.lineas.length}</td>
+              <td><button className="mini" onClick={() => onVer(oc)}>Ver / imprimir</button></td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

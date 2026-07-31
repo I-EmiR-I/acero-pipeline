@@ -6,6 +6,13 @@ import { despachar, obtenerEstado } from './estado';
 const MAX_MENSAJES = 25;
 const DEBOUNCE_MS = 12_000;
 
+/**
+ * Interruptor de la detección automática de cotizaciones (leads sugeridos por IA).
+ * Desactivado por ahora: la prioridad es solo el bot de órdenes de compra por WhatsApp.
+ * Ponlo en true para reactivar las sugerencias automáticas.
+ */
+const DETECCION_AUTOMATICA = false;
+
 interface Grupo {
   jid: string;
   nombre: string;
@@ -24,6 +31,10 @@ export function listarGrupos() {
   }));
 }
 
+export function mensajesGrupo(jid: string): MensajeWA[] {
+  return grupos.get(jid)?.mensajes ?? [];
+}
+
 export function registrarMensaje(
   jid: string,
   nombreGrupo: string,
@@ -40,6 +51,9 @@ export function registrarMensaje(
   g.totalRecibidos += 1;
   g.mensajes.push({ de, texto, fecha: new Date().toISOString() });
   if (g.mensajes.length > MAX_MENSAJES) g.mensajes = g.mensajes.slice(-MAX_MENSAJES);
+
+  // El grupo queda registrado (para el selector del panel), pero sin IA si está desactivada.
+  if (!DETECCION_AUTOMATICA) return;
 
   if (opciones?.inmediato) {
     if (g.timer) clearTimeout(g.timer);

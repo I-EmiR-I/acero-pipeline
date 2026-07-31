@@ -55,6 +55,17 @@ export interface DatosProveedor {
   pais?: string;
 }
 
+/** Proveedor guardado en el catálogo; sus datos fiscales se reutilizan al crear OCs. */
+export interface Proveedor extends DatosProveedor {
+  id: string;
+  noProveedor?: string;
+  condicionesPago?: string;
+  /** Correo(s) del vendedor del proveedor (referencia; a futuro para enviarle la OC). */
+  emailVendedor?: string;
+  /** Grupo de WhatsApp asociado a este proveedor, si aplica. */
+  grupoJid?: string;
+}
+
 export interface OrdenCompra {
   id: string;
   folio: string;

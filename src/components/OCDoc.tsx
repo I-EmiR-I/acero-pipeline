@@ -1,5 +1,5 @@
 import type { OrdenCompra } from '../types';
-import { EMPRESA, IVA_TASA } from '../empresa';
+import { EMPRESA } from '../empresa';
 
 const money = (n: number) =>
   n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2 });
@@ -7,8 +7,6 @@ const money = (n: number) =>
 const FILAS_MIN = 12;
 
 export function OCDoc({ oc, onCerrar }: { oc: OrdenCompra; onCerrar: () => void }) {
-  const subtotal = oc.lineas.reduce((s, l) => s + l.cantidad * l.precioUnitario, 0);
-  const iva = subtotal * IVA_TASA;
   const p = oc.proveedorDatos;
   const vacias = Math.max(0, FILAS_MIN - oc.lineas.length);
   const fecha = new Date(oc.fecha).toLocaleDateString('es-MX', {
@@ -75,11 +73,10 @@ export function OCDoc({ oc, onCerrar }: { oc: OrdenCompra; onCerrar: () => void 
           <thead>
             <tr>
               <th style={{ width: '10%' }}>Codigo</th>
-              <th style={{ width: '11%' }}>Cantidad</th>
+              <th style={{ width: '12%' }}>Cantidad</th>
               <th>Descripción</th>
-              <th style={{ width: '9%' }}>Unidad</th>
-              <th className="num" style={{ width: '12%' }}>$ X {oc.lineas[0]?.unidad?.toUpperCase() || 'UNIDAD'}</th>
-              <th style={{ width: '14%' }}>Importe</th>
+              <th style={{ width: '12%' }}>Unidad</th>
+              <th className="num" style={{ width: '16%' }}>$ X KG</th>
             </tr>
           </thead>
           <tbody>
@@ -89,13 +86,12 @@ export function OCDoc({ oc, onCerrar }: { oc: OrdenCompra; onCerrar: () => void 
                 <td className="num">{l.cantidad.toLocaleString('es-MX')}</td>
                 <td>{l.producto.toUpperCase()}</td>
                 <td className="centro">{l.unidad.toUpperCase()}</td>
-                <td className="num">{money(l.precioUnitario)}</td>
-                <td className="num">{money(l.cantidad * l.precioUnitario)}</td>
+                <td className="num">{money(l.precioUnitario)} /kg</td>
               </tr>
             ))}
             {Array.from({ length: vacias }).map((_, i) => (
               <tr key={`v${i}`}>
-                <td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td>
+                <td>&nbsp;</td><td></td><td></td><td></td><td></td>
               </tr>
             ))}
           </tbody>
@@ -105,13 +101,6 @@ export function OCDoc({ oc, onCerrar }: { oc: OrdenCompra; onCerrar: () => void 
           <div className="oc-nota">
             <span>NOTA:</span> {oc.nota ?? ''}
           </div>
-          <table className="oc-totales">
-            <tbody>
-              <tr><td>SUBTOTAL:</td><td className="num">{money(subtotal)}</td></tr>
-              <tr><td>IVA:</td><td className="num">{money(iva)}</td></tr>
-              <tr><td>TOTAL:</td><td className="num">{money(subtotal + iva)}</td></tr>
-            </tbody>
-          </table>
         </div>
       </div>
     </div>

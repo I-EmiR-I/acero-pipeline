@@ -14,7 +14,12 @@ function cargar(): Estado {
   try {
     if (fs.existsSync(ARCHIVO)) {
       const e = JSON.parse(fs.readFileSync(ARCHIVO, 'utf8')) as Estado;
-      return { ...e, sugerencias: e.sugerencias ?? [] };
+      return {
+        ...e,
+        sugerencias: e.sugerencias ?? [],
+        proveedores: e.proveedores ?? [],
+        config: e.config ?? {},
+      };
     }
   } catch (err) {
     console.error('estado.json corrupto, se regenera el demo:', err);

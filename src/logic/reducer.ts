@@ -8,6 +8,7 @@ import type {
   LineaOC,
   LineaProducto,
   OrdenCompra,
+  Proveedor,
   Resultado,
   Sugerencia,
   TipoEvento,
@@ -16,11 +17,19 @@ import { conciliar } from '../reconcile';
 import { seed } from '../seed';
 import { uid } from '../uid';
 
+export interface ConfigApp {
+  /** JID del grupo de WhatsApp designado para dictar órdenes de compra por comando. */
+  grupoComandosJid?: string;
+  grupoComandosNombre?: string;
+}
+
 export interface Estado {
   leads: Lead[];
   ocsDirectas: OrdenCompra[];
   folioSiguiente: number;
   sugerencias: Sugerencia[];
+  proveedores: Proveedor[];
+  config: ConfigApp;
 }
 
 function evento(tipo: TipoEvento, descripcion: string, actor: string): Evento {
@@ -83,10 +92,16 @@ export type Accion =
     }
   | { tipo: 'registrar_factura'; leadId: string; folio: string; lineas: LineaFactura[]; actor: string }
   | { tipo: 'cerrar_lead'; leadId: string; resultado: Resultado; actor: string }
+  | { tipo: 'eliminar_lead'; leadId: string }
   | { tipo: 'agregar_nota'; leadId: string; texto: string; actor: string }
   | { tipo: 'agregar_sugerencia'; sugerencia: Omit<Sugerencia, 'id' | 'fecha'> }
   | { tipo: 'aceptar_sugerencia'; sugerenciaId: string; actor: string }
   | { tipo: 'descartar_sugerencia'; sugerenciaId: string }
+  | { tipo: 'guardar_proveedor'; proveedor: Omit<Proveedor, 'id'> & { id?: string } }
+  | { tipo: 'eliminar_proveedor'; proveedorId: string }
+  | { tipo: 'importar_proveedores'; proveedores: (Omit<Proveedor, 'id'> & { id?: string })[] }
+  | { tipo: 'set_grupo_comandos'; grupoComandosJid?: string; grupoComandosNombre?: string }
+  | { tipo: 'reiniciar_datos' }
   | { tipo: 'reiniciar_demo' };
 
 function tocar(lead: Lead): Lead {
@@ -116,8 +131,40 @@ export function reducer(estado: Estado, a: Accion): Estado {
       };
       return { ...estado, leads: [lead, ...estado.leads] };
     }
+    case 'reiniciar_datos':
+      // Limpia la operación (leads, OCs, sugerencias) pero conserva el catálogo de proveedores y la config.
+      return { ...estado, leads: [], ocsDirectas: [], sugerencias: [], folioSiguiente: 115 };
     case 'reiniciar_demo':
       return seed();
+    case 'eliminar_lead':
+      return { ...estado, leads: estado.leads.filter((l) => l.id !== a.leadId) };
+    case 'guardar_proveedor': {
+      const id = a.proveedor.id ?? uid();
+      const prov: Proveedor = { ...a.proveedor, id };
+      const existe = estado.proveedores.some((p) => p.id === id);
+      return {
+        ...estado,
+        proveedores: existe
+          ? estado.proveedores.map((p) => (p.id === id ? prov : p))
+          : [...estado.proveedores, prov],
+      };
+    }
+    case 'eliminar_proveedor':
+      return { ...estado, proveedores: estado.proveedores.filter((p) => p.id !== a.proveedorId) };
+    case 'importar_proveedores':
+      return {
+        ...estado,
+        proveedores: a.proveedores.map((p) => ({ ...p, id: p.id ?? uid() })),
+      };
+    case 'set_grupo_comandos':
+      return {
+        ...estado,
+        config: {
+          ...estado.config,
+          grupoComandosJid: a.grupoComandosJid,
+          grupoComandosNombre: a.grupoComandosNombre,
+        },
+      };
     case 'agregar_sugerencia': {
       const s: Sugerencia = { ...a.sugerencia, id: uid(), fecha: new Date().toISOString() };
       return { ...estado, sugerencias: [s, ...estado.sugerencias] };

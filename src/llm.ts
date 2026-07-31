@@ -1,8 +1,74 @@
 import type { Estado } from './store';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-const MODELO = 'gemini-2.5-flash';
+const MODELO = 'gemini-flash-lite-latest';
 const URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODELO}:generateContent`;
+
+/**
+ * Extractor ESTRECHO para crear órdenes de compra.
+ * Único trabajo del modelo: convertir el dictado del usuario en líneas {producto, cantidad, unidad, precio}.
+ * No elige proveedor, no calcula importes/IVA, no inventa números. temperature 0 = salida repetible.
+ */
+export interface LineaDictada {
+  producto: string;
+  cantidad: number;
+  unidad: string;
+  precioUnitario: number;
+}
+
+const ESQUEMA_LINEAS = {
+  type: 'OBJECT',
+  properties: {
+    lineas: {
+      type: 'ARRAY',
+      items: {
+        type: 'OBJECT',
+        properties: {
+          producto: { type: 'STRING' },
+          cantidad: { type: 'NUMBER' },
+          unidad: { type: 'STRING' },
+          precioUnitario: { type: 'NUMBER' },
+        },
+        required: ['producto', 'cantidad', 'unidad', 'precioUnitario'],
+      },
+    },
+  },
+  required: ['lineas'],
+};
+
+const INSTRUCCIONES_LINEAS = `Convierte el dictado del usuario en líneas de una orden de compra de acero. Es una tarea de EXTRACCIÓN literal, no de interpretación.
+
+Por cada producto que mencione el usuario devuelve: producto (descripción tal como la dicta), cantidad (número), unidad, precioUnitario (número, el precio por unidad que dicta el usuario).
+
+Reglas estrictas:
+- Usa SOLO los números que aparecen en el texto. NUNCA inventes ni calcules cantidades, precios, importes, subtotales ni IVA.
+- Unidades: "toneladas"/"ton"→ton, "kilos"/"kg"→kg, "piezas"/"pzas"→pza, "metros"/"m"→m. Si no se especifica unidad, usa "pza".
+- "23.5 el kg" / "a 23.5 kg" → precioUnitario 23.5, unidad kg. "16,200 la tonelada" → precioUnitario 16200, unidad ton.
+- Interpreta separadores de miles en español: "16,200" = 16200. "1,500" = 1500.
+- No agregues productos que el usuario no mencionó. Si el dictado no contiene ningún producto con precio, devuelve lineas vacío.`;
+
+export async function extraerLineasOC(texto: string): Promise<LineaDictada[]> {
+  if (!API_KEY) throw new Error('Falta VITE_GEMINI_API_KEY en .env.local');
+  const res = await fetch(URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': API_KEY },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: INSTRUCCIONES_LINEAS }] },
+      contents: [{ role: 'user', parts: [{ text: texto }] }],
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: ESQUEMA_LINEAS,
+        temperature: 0,
+      },
+    }),
+  });
+  if (!res.ok) throw new Error(`Gemini respondió ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const data = await res.json();
+  const textoJson = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!textoJson) throw new Error('Gemini no devolvió contenido');
+  const parsed = JSON.parse(textoJson) as { lineas?: LineaDictada[] };
+  return parsed.lineas ?? [];
+}
 
 /** Acción propuesta por el LLM. El LLM nunca toca los datos: solo propone; el usuario confirma. */
 export interface Propuesta {
