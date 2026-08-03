@@ -13,8 +13,6 @@ COPY . .
 RUN pnpm build
 
 ENV NODE_ENV=production
-# Railway inyecta PORT; 8787 es solo el valor por defecto local.
-ENV PORT=8787
-EXPOSE 8787
+# NO fijamos PORT: Railway lo inyecta en tiempo de ejecución y el server lo lee de process.env.PORT.
 
 CMD ["pnpm", "start"]
