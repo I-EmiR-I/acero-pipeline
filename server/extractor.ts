@@ -118,6 +118,12 @@ export async function modificarOrden(
   return parsed.lineas ?? [];
 }
 
+/** Extrae solo líneas (para el panel Crear OC, donde el proveedor se elige aparte). */
+export async function extraerLineas(texto: string): Promise<LineaDictada[]> {
+  const r = await interpretarOrden(texto);
+  return r.lineas;
+}
+
 export async function interpretarOrden(
   texto: string,
   proveedoresCatalogo: string[] = []

@@ -13,6 +13,13 @@ import { CrearOC } from './components/CrearOC';
 
 type Vista = 'tablero' | 'ordenes' | 'crear_oc' | 'sugerencias' | 'whatsapp';
 
+// Interruptores para mostrar/ocultar en la UI sin borrar el código.
+// La detección automática de leads está desactivada, así que estos quedan ocultos por ahora.
+const MOSTRAR_SUGERENCIAS = false;
+const MOSTRAR_LIMPIAR_DATOS = false;
+// El asistente general de texto se oculta: la creación de OC se hace en su panel y por WhatsApp.
+const MOSTRAR_ASISTENTE = false;
+
 function Contenido() {
   const { estado, dispatch } = useStore();
   const [vista, setVista] = useState<Vista>('tablero');
@@ -24,7 +31,7 @@ function Contenido() {
   return (
     <div className="app">
       <header className="encabezado no-print">
-        <h1>Pipeline de precios especiales</h1>
+        <h1>Sistema de compras</h1>
         <nav className="pestanas">
           <button className={vista === 'tablero' ? 'activa' : ''} onClick={() => setVista('tablero')}>
             Tablero
@@ -35,25 +42,29 @@ function Contenido() {
           <button className={vista === 'ordenes' ? 'activa' : ''} onClick={() => setVista('ordenes')}>
             Órdenes de compra
           </button>
-          <button className={vista === 'sugerencias' ? 'activa' : ''} onClick={() => setVista('sugerencias')}>
-            Sugerencias
-            {estado.sugerencias.length > 0 && (
-              <span className="badge-conteo">{estado.sugerencias.length}</span>
-            )}
-          </button>
+          {MOSTRAR_SUGERENCIAS && (
+            <button className={vista === 'sugerencias' ? 'activa' : ''} onClick={() => setVista('sugerencias')}>
+              Sugerencias
+              {estado.sugerencias.length > 0 && (
+                <span className="badge-conteo">{estado.sugerencias.length}</span>
+              )}
+            </button>
+          )}
           <button className={vista === 'whatsapp' ? 'activa' : ''} onClick={() => setVista('whatsapp')}>
             WhatsApp
           </button>
         </nav>
         <div className="acciones">
-          <button
-            onClick={() => {
-              if (confirm('¿Limpiar leads, órdenes y sugerencias? El catálogo de proveedores se conserva.'))
-                dispatch({ tipo: 'reiniciar_datos' });
-            }}
-          >
-            Limpiar datos
-          </button>
+          {MOSTRAR_LIMPIAR_DATOS && (
+            <button
+              onClick={() => {
+                if (confirm('¿Limpiar leads, órdenes y sugerencias? El catálogo de proveedores se conserva.'))
+                  dispatch({ tipo: 'reiniciar_datos' });
+              }}
+            >
+              Limpiar datos
+            </button>
+          )}
           <button className="primario" onClick={() => setNuevoAbierto(true)}>Nueva solicitud</button>
         </div>
       </header>
@@ -61,10 +72,10 @@ function Contenido() {
       {vista === 'tablero' && <Tablero onAbrir={setLeadAbierto} />}
       {vista === 'crear_oc' && <CrearOC onCreada={setOcAbierta} />}
       {vista === 'ordenes' && <ListaOC onVer={setOcAbierta} />}
-      {vista === 'sugerencias' && <Sugerencias />}
+      {MOSTRAR_SUGERENCIAS && vista === 'sugerencias' && <Sugerencias />}
       {vista === 'whatsapp' && <WhatsAppPanel />}
 
-      {vista !== 'crear_oc' && (
+      {MOSTRAR_ASISTENTE && vista !== 'crear_oc' && (
         <Asistente
           onAplicada={(tipo) => {
             if (tipo === 'crear_oc_directa' || tipo === 'emitir_oc') setVista('ordenes');

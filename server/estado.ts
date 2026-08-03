@@ -6,7 +6,11 @@ import { reducer } from '../src/logic/reducer';
 import { seed } from '../src/seed';
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
-const ARCHIVO = path.join(dir, 'estado.json');
+// En producción, DATA_DIR apunta al volumen persistente de Railway; en local, la carpeta server/.
+export const DATA_DIR = process.env.DATA_DIR || dir;
+const ARCHIVO = path.join(DATA_DIR, 'estado.json');
+
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
 let estado: Estado = cargar();
 

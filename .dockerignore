@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.env
+.env.local
+.env.*.local
+server/estado.json
+server/auth
+server/OC-*.pdf
+*.log
+.vscode
+.idea

@@ -3,10 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "packageManager": "pnpm@11.4.0",
   "scripts": {
     "dev": "vite",
     "server": "tsx watch server/index.ts",
     "build": "tsc -b && vite build",
+    "start": "tsx server/index.ts",
     "lint": "oxlint",
     "preview": "vite preview"
   },

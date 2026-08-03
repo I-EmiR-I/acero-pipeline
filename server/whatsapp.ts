@@ -1,6 +1,5 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import makeWASocket, {
   useMultiFileAuthState,
   fetchLatestBaileysVersion,
@@ -12,10 +11,10 @@ import pino from 'pino';
 import QRCode from 'qrcode';
 import { registrarMensaje } from './monitor';
 import { procesarComando } from './comandos';
-import { obtenerEstado } from './estado';
+import { obtenerEstado, DATA_DIR } from './estado';
 
-const dir = path.dirname(fileURLToPath(import.meta.url));
-const AUTH_DIR = path.join(dir, 'auth');
+// La sesión de WhatsApp vive en el volumen persistente (junto a estado.json) para sobrevivir redeploys.
+const AUTH_DIR = path.join(DATA_DIR, 'auth');
 
 type Conexion = 'iniciando' | 'esperando_qr' | 'esperando_codigo' | 'conectado' | 'desconectado' | 'error';
 

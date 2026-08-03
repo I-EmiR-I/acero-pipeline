@@ -14,14 +14,20 @@ const Ctx = createContext<Store | null>(null);
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [estado, setEstado] = useState<Estado | null>(null);
   const [errorApi, setErrorApi] = useState(false);
+  const [necesitaLogin, setNecesitaLogin] = useState(false);
   const ocupado = useRef(false);
 
   const cargar = useCallback(async () => {
     if (ocupado.current) return;
     try {
       const r = await fetch('/api/estado');
+      if (r.status === 401) {
+        setNecesitaLogin(true);
+        return;
+      }
       if (!r.ok) throw new Error(String(r.status));
       setEstado(await r.json());
+      setNecesitaLogin(false);
       setErrorApi(false);
     } catch {
       setErrorApi(true);
@@ -33,6 +39,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const t = setInterval(cargar, 3000);
     return () => clearInterval(t);
   }, [cargar]);
+
+  if (necesitaLogin) return <Login onEntrar={cargar} />;
 
   const dispatch = useCallback(async (a: Accion): Promise<Estado | null> => {
     ocupado.current = true;
@@ -76,4 +84,50 @@ export function useStore(): Store {
   const s = useContext(Ctx);
   if (!s) throw new Error('useStore fuera de StoreProvider');
   return s;
+}
+
+function Login({ onEntrar }: { onEntrar: () => void }) {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(false);
+  const [cargando, setCargando] = useState(false);
+
+  const entrar = async () => {
+    if (!password || cargando) return;
+    setCargando(true);
+    setError(false);
+    try {
+      const r = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      if (r.ok) onEntrar();
+      else setError(true);
+    } catch {
+      setError(true);
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 320, textAlign: 'center' }}>
+        <h1 style={{ fontSize: 20, marginBottom: 4 }}>Sistema de compras</h1>
+        <p style={{ color: 'var(--text-2)', fontSize: 14, marginBottom: 16 }}>Ingresa la contraseña para continuar.</p>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && entrar()}
+          placeholder="Contraseña"
+          autoFocus
+        />
+        {error && <div style={{ color: 'var(--danger)', fontSize: 13, marginTop: 8 }}>Contraseña incorrecta.</div>}
+        <button className="primario" style={{ width: '100%', marginTop: 12 }} onClick={entrar} disabled={cargando}>
+          {cargando ? 'Entrando…' : 'Entrar'}
+        </button>
+      </div>
+    </div>
+  );
 }
