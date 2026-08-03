@@ -96,8 +96,8 @@ export async function modificarOrden(
   lineasActuales: LineaDictada[],
   instruccion: string
 ): Promise<LineaDictada[]> {
-  const apiKey = process.env.VITE_GEMINI_API_KEY;
-  if (!apiKey) throw new Error('Falta VITE_GEMINI_API_KEY');
+  const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+  if (!apiKey) throw new Error('Falta la variable GEMINI_API_KEY en el servidor');
   const contexto = `LÍNEAS ACTUALES:\n${JSON.stringify(lineasActuales)}\n\nINSTRUCCIÓN:\n${instruccion}`;
   const res = await fetch(URL, {
     method: 'POST',
@@ -128,8 +128,8 @@ export async function interpretarOrden(
   texto: string,
   proveedoresCatalogo: string[] = []
 ): Promise<OrdenInterpretada> {
-  const apiKey = process.env.VITE_GEMINI_API_KEY;
-  if (!apiKey) throw new Error('Falta VITE_GEMINI_API_KEY');
+  const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+  if (!apiKey) throw new Error('Falta la variable GEMINI_API_KEY en el servidor');
   const catalogoTxt =
     proveedoresCatalogo.length > 0
       ? `\n\nProveedores del catálogo (elige de aquí):\n${proveedoresCatalogo.map((n) => `- ${n}`).join('\n')}\n\n` +

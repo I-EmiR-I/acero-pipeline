@@ -73,9 +73,9 @@ export async function clasificar(
   pendientes: Sugerencia[],
   leadsAbiertos: LeadContexto[]
 ): Promise<Deteccion | null> {
-  const apiKey = process.env.VITE_GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
   if (!apiKey) {
-    console.error('Falta VITE_GEMINI_API_KEY; no se clasifica.');
+    console.error('Falta GEMINI_API_KEY; no se clasifica.');
     return null;
   }
   const convo = mensajes.map((m) => `[${m.fecha}] ${m.de}: ${m.texto}`).join('\n');
