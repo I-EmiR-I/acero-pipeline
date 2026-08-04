@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '../store';
+import { ImportarProveedores } from './ImportarProveedores';
 
 interface EstadoWA {
   conexion: 'iniciando' | 'esperando_qr' | 'esperando_codigo' | 'conectado' | 'desconectado' | 'error';
@@ -200,6 +201,11 @@ export function WhatsAppPanel() {
           </tbody>
         </table>
       )}
+
+      <h3 style={{ fontSize: 13, textTransform: 'uppercase', color: 'var(--text-3)', margin: '18px 0 8px' }}>
+        Importar proveedores ({store.proveedores.length} en catálogo)
+      </h3>
+      <ImportarProveedores />
     </div>
   );
 }

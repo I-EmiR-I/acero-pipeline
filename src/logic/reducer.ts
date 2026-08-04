@@ -159,11 +159,21 @@ export function reducer(estado: Estado, a: Accion): Estado {
     }
     case 'eliminar_proveedor':
       return { ...estado, proveedores: estado.proveedores.filter((p) => p.id !== a.proveedorId) };
-    case 'importar_proveedores':
-      return {
-        ...estado,
-        proveedores: a.proveedores.map((p) => ({ ...p, id: p.id ?? uid() })),
-      };
+    case 'importar_proveedores': {
+      // Upsert: conserva id, ultimoFolio y grupo de proveedores que ya existan (por nombre + RFC).
+      const proveedores = a.proveedores.map((p) => {
+        const prev = estado.proveedores.find(
+          (e) => norm(e.nombre) === norm(p.nombre) && (e.rfc ?? '') === (p.rfc ?? '')
+        );
+        return {
+          ...p,
+          id: p.id ?? prev?.id ?? uid(),
+          ultimoFolio: p.ultimoFolio ?? prev?.ultimoFolio,
+          grupoJid: p.grupoJid ?? prev?.grupoJid,
+        };
+      });
+      return { ...estado, proveedores };
+    }
     case 'set_grupo_comandos':
       return {
         ...estado,
