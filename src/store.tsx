@@ -1,11 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Accion, Estado } from './logic/reducer';
+import type { DatosEmpresa } from './types';
 
 export type { Accion, Estado, LineaOCEntrada } from './logic/reducer';
 
 interface Store {
   estado: Estado;
+  empresa: DatosEmpresa | null;
   dispatch: (a: Accion) => Promise<Estado | null>;
 }
 
@@ -13,6 +15,7 @@ const Ctx = createContext<Store | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [estado, setEstado] = useState<Estado | null>(null);
+  const [empresa, setEmpresa] = useState<DatosEmpresa | null>(null);
   const [errorApi, setErrorApi] = useState(false);
   const [necesitaLogin, setNecesitaLogin] = useState(false);
   const ocupado = useRef(false);
@@ -39,6 +42,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const t = setInterval(cargar, 3000);
     return () => clearInterval(t);
   }, [cargar]);
+
+  // Datos de empresa: se cargan una vez desde el backend (siempre correctos, no dependen del build).
+  useEffect(() => {
+    if (!estado || empresa) return;
+    fetch('/api/empresa')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setEmpresa(d))
+      .catch(() => {});
+  }, [estado, empresa]);
 
   if (necesitaLogin) return <Login onEntrar={cargar} />;
 
@@ -77,7 +89,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     );
   }
 
-  return <Ctx.Provider value={{ estado, dispatch }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ estado, empresa, dispatch }}>{children}</Ctx.Provider>;
 }
 
 export function useStore(): Store {

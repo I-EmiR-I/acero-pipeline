@@ -35,7 +35,7 @@ export function estadoWhatsApp() {
   return { conexion, qr: qrDataUrl, pairing: pairingCode, error: ultimoError };
 }
 
-/** Vincula con código de teléfono (más confiable que el QR). El número va con lada, ej. 5218112446576. */
+/** Vincula con código de teléfono. El número va con lada, ej. 5218112446576. */
 export async function vincularConTelefono(telefono: string): Promise<void> {
   telefonoPairing = telefono.replace(/\D/g, '');
   pairingCode = null;
@@ -43,6 +43,20 @@ export async function vincularConTelefono(telefono: string): Promise<void> {
   ultimoError = null;
   try {
     await fs.rm(AUTH_DIR, { recursive: true, force: true }); // sesión nueva
+  } catch {
+    /* no existía */
+  }
+  await iniciarWhatsApp();
+}
+
+/** Cambia a modo QR (para dispositivos sin "vincular con número", o si el código falló). */
+export async function usarModoQR(): Promise<void> {
+  telefonoPairing = null;
+  pairingCode = null;
+  qrDataUrl = null;
+  ultimoError = null;
+  try {
+    await fs.rm(AUTH_DIR, { recursive: true, force: true }); // sesión nueva para generar QR
   } catch {
     /* no existía */
   }
@@ -152,29 +166,28 @@ export async function iniciarWhatsApp(): Promise<void> {
 
     s.ev.on('creds.update', saveCreds);
 
-    // Vinculación por código de teléfono: se pide una vez, poco después de crear el socket.
-    if (usarPairing) {
-      setTimeout(async () => {
-        if (miGeneracion !== generacion || pairingSolicitado) return;
-        pairingSolicitado = true;
-        try {
-          const code = await s.requestPairingCode(telefonoPairing!);
-          pairingCode = code.match(/.{1,4}/g)?.join('-') ?? code;
-          conexion = 'esperando_codigo';
-          console.log(`[whatsapp] Código de vinculación: ${pairingCode}`);
-        } catch (e) {
-          ultimoError = 'No se pudo generar el código: ' + (e instanceof Error ? e.message : String(e));
-          console.error('[whatsapp] Error al pedir código:', e);
-        }
-      }, 3000);
-    }
-
     s.ev.on('connection.update', async (u) => {
       if (miGeneracion !== generacion) return; // evento de un socket viejo
-      if (u.qr && !telefonoPairing) {
-        conexion = 'esperando_qr';
-        qrDataUrl = await QRCode.toDataURL(u.qr, { margin: 1, width: 300 });
-        console.log('[whatsapp] QR nuevo generado (caduca en ~60 s, escanéalo pronto)');
+      // El evento 'qr' indica que el socket ya está listo para vincular.
+      if (u.qr) {
+        if (usarPairing && !pairingSolicitado) {
+          // Modo código de teléfono: pedir el código AHORA que el socket está listo (evita "Connection Closed").
+          pairingSolicitado = true;
+          try {
+            const code = await s.requestPairingCode(telefonoPairing!);
+            pairingCode = code.match(/.{1,4}/g)?.join('-') ?? code;
+            conexion = 'esperando_codigo';
+            console.log(`[whatsapp] Código de vinculación: ${pairingCode}`);
+          } catch (e) {
+            ultimoError = 'No se pudo generar el código: ' + (e instanceof Error ? e.message : String(e));
+            console.error('[whatsapp] Error al pedir código:', e);
+          }
+        } else if (!usarPairing) {
+          // Modo QR (por defecto).
+          conexion = 'esperando_qr';
+          qrDataUrl = await QRCode.toDataURL(u.qr, { margin: 1, width: 300 });
+          console.log('[whatsapp] QR nuevo generado (caduca en ~60 s, escanéalo pronto)');
+        }
       }
       if (u.connection === 'open') {
         conexion = 'conectado';

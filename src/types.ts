@@ -44,6 +44,16 @@ export interface LineaOC {
   precioUnitario: number;
 }
 
+export interface DatosEmpresa {
+  razonSocial: string;
+  rfc: string;
+  direccion: string;
+  localidad: string;
+  telefono: string;
+  celular: string;
+  email: string;
+}
+
 export interface DatosProveedor {
   nombre: string;
   rfc?: string;

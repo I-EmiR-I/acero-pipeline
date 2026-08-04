@@ -25,6 +25,8 @@ export function WhatsAppPanel() {
   const [pidiendo, setPidiendo] = useState(false);
   const grupoComandos = store.config.grupoComandosJid ?? '';
 
+  const [cambiando, setCambiando] = useState(false);
+
   const pedirCodigo = async () => {
     setPidiendo(true);
     try {
@@ -35,6 +37,15 @@ export function WhatsAppPanel() {
       });
     } finally {
       setPidiendo(false);
+    }
+  };
+
+  const usarQR = async () => {
+    setCambiando(true);
+    try {
+      await fetch('/api/whatsapp/qr', { method: 'POST' });
+    } finally {
+      setCambiando(false);
     }
   };
 
@@ -68,8 +79,8 @@ export function WhatsAppPanel() {
           <div style={{ textAlign: 'center', margin: '12px 0' }}>
             <img src={estado.qr} alt="Código QR de WhatsApp" style={{ borderRadius: 8 }} />
             <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 8 }}>
-              En el teléfono del número dedicado: WhatsApp → Ajustes → Dispositivos vinculados →
-              Vincular un dispositivo, y escanea este código.
+              En el teléfono: WhatsApp → Ajustes → Dispositivos vinculados → Vincular un dispositivo, y
+              escanea este código.
             </div>
           </div>
         )}
@@ -87,25 +98,36 @@ export function WhatsAppPanel() {
         )}
         {estado.conexion === 'conectado' && (
           <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 6 }}>
-            Agrega este número a un grupo con el proveedor y el bot empezará a escuchar. Las
-            cotizaciones detectadas aparecen en la pestaña Sugerencias.
+            Ya está conectado. Agrega este número a un grupo y elige abajo el grupo de comandos.
           </div>
         )}
-        {estado.conexion !== 'conectado' && !estado.pairing && (
+
+        {estado.conexion !== 'conectado' && (
           <div style={{ marginTop: 12, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
-            <label>¿Problemas con el QR? Vincula con código de teléfono</label>
+            <label>Forma de conectar</label>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+              <button onClick={usarQR} disabled={cambiando} className={estado.qr ? 'primario' : ''}>
+                {cambiando ? '…' : 'Escanear QR'}
+              </button>
+              <span style={{ alignSelf: 'center', color: 'var(--text-3)', fontSize: 12 }}>o</span>
+              <span style={{ alignSelf: 'center', color: 'var(--text-2)', fontSize: 13 }}>vincular con número:</span>
+            </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <input
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
                 placeholder="Ej. 528112446576 (lada + número)"
               />
-              <button className="primario" onClick={pedirCodigo} disabled={pidiendo || telefono.replace(/\D/g, '').length < 10}>
+              <button
+                onClick={pedirCodigo}
+                disabled={pidiendo || telefono.replace(/\D/g, '').length < 10}
+              >
                 {pidiendo ? 'Generando…' : 'Obtener código'}
               </button>
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 6 }}>
-              Es el número del WhatsApp que quieres vincular, con lada del país (México = 52). Sin espacios ni +.
+              El <strong>QR</strong> sirve para cualquier teléfono (incluidos Android viejos). El{' '}
+              <strong>código de número</strong> es una alternativa para teléfonos con esa opción.
             </div>
           </div>
         )}

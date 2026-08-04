@@ -1,5 +1,6 @@
-import type { OrdenCompra } from '../types';
-import { EMPRESA } from '../empresa';
+import type { DatosEmpresa, OrdenCompra } from '../types';
+import { EMPRESA as EMPRESA_DEFAULT } from '../empresa';
+import { useStore } from '../store';
 
 const money = (n: number) =>
   n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2 });
@@ -7,6 +8,8 @@ const money = (n: number) =>
 const FILAS_MIN = 12;
 
 export function OCDoc({ oc, onCerrar }: { oc: OrdenCompra; onCerrar: () => void }) {
+  const { empresa } = useStore();
+  const EMPRESA: DatosEmpresa = empresa ?? EMPRESA_DEFAULT;
   const p = oc.proveedorDatos;
   const vacias = Math.max(0, FILAS_MIN - oc.lineas.length);
   const fecha = new Date(oc.fecha).toLocaleDateString('es-MX', {

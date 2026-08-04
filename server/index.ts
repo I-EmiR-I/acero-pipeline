@@ -8,10 +8,11 @@ import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import type { Accion } from '../src/logic/reducer';
 import { despachar, obtenerEstado, DATA_DIR } from './estado';
-import { estadoWhatsApp, iniciarWhatsApp, vincularConTelefono } from './whatsapp';
+import { estadoWhatsApp, iniciarWhatsApp, vincularConTelefono, usarModoQR } from './whatsapp';
 import { listarGrupos, mensajesGrupo, registrarMensaje } from './monitor';
 import { procesarComando } from './comandos';
 import { extraerLineas } from './extractor';
+import { getEmpresa } from './empresa';
 
 config({ path: '.env.local' });
 
@@ -66,6 +67,10 @@ app.get('/api/estado', (_req, res) => {
   res.json(obtenerEstado());
 });
 
+app.get('/api/empresa', (_req, res) => {
+  res.json(getEmpresa());
+});
+
 app.post('/api/accion', (req, res) => {
   const accion = req.body as Accion;
   if (!accion?.tipo) {
@@ -105,6 +110,11 @@ app.post('/api/whatsapp/pair', async (req, res) => {
     return;
   }
   await vincularConTelefono(limpio);
+  res.json({ ok: true });
+});
+
+app.post('/api/whatsapp/qr', async (_req, res) => {
+  await usarModoQR();
   res.json({ ok: true });
 });
 
