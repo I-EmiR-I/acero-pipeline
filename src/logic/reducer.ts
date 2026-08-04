@@ -91,6 +91,13 @@ export type Accion =
       nota?: string;
       actor: string;
     }
+  | {
+      tipo: 'editar_oc_directa';
+      ocId: string;
+      lineas: LineaOCEntrada[];
+      nota?: string;
+      condicionesPago?: string;
+    }
   | { tipo: 'registrar_factura'; leadId: string; folio: string; lineas: LineaFactura[]; actor: string }
   | { tipo: 'cerrar_lead'; leadId: string; resultado: Resultado; actor: string }
   | { tipo: 'eliminar_lead'; leadId: string }
@@ -305,6 +312,20 @@ export function reducer(estado: Estado, a: Accion): Estado {
         proveedores,
       };
     }
+    case 'editar_oc_directa':
+      return {
+        ...estado,
+        ocsDirectas: estado.ocsDirectas.map((o) =>
+          o.id === a.ocId
+            ? {
+                ...o,
+                lineas: a.lineas.map((l) => ({ ...l, lineaId: uid() })),
+                nota: a.nota !== undefined ? a.nota : o.nota,
+                condicionesPago: a.condicionesPago !== undefined ? a.condicionesPago : o.condicionesPago,
+              }
+            : o
+        ),
+      };
     case 'enviar_a_compras':
       return mapearLead(estado, a.leadId, (lead) =>
         tocar({

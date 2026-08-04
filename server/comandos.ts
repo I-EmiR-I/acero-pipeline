@@ -99,6 +99,51 @@ export async function procesarComando(jid: string, texto: string): Promise<Respu
     return null;
   }
 
+  // Editar una OC YA CREADA por su folio: "edita la 115: agrega 100 kg de solera a 40".
+  const mEdit = texto.match(/^\s*(?:edita(?:r)?|modifica(?:r)?)\s+(?:la\s+)?(?:oc\s+|orden\s+)?#?(\d+)\s*[:,-]?\s*(.+)/is);
+  if (mEdit) {
+    const folio = mEdit[1];
+    const instruccion = mEdit[2].trim();
+    const oc = obtenerEstado().ocsDirectas.find((o) => o.folio === folio);
+    if (!oc) return { texto: `No encontré una orden con folio ${folio}.` };
+    const lineasActuales: LineaDictada[] = oc.lineas.map((l) => ({
+      producto: l.producto,
+      cantidad: l.cantidad,
+      unidad: l.unidad,
+      precioUnitario: l.precioUnitario,
+    }));
+    let nuevas: LineaDictada[];
+    try {
+      nuevas = await modificarOrden(lineasActuales, instruccion);
+    } catch (err) {
+      return { texto: `No pude aplicar el cambio (${err instanceof Error ? err.message : 'error'}). Intenta de nuevo.` };
+    }
+    if (nuevas.length === 0) return { texto: 'Ese cambio dejaría la orden vacía; no se aplicó.' };
+    const est = despachar({
+      tipo: 'editar_oc_directa',
+      ocId: oc.id,
+      lineas: nuevas.map((l) => ({
+        producto: l.producto,
+        cantidad: l.cantidad,
+        unidad: l.unidad,
+        precioUnitario: l.precioUnitario,
+      })),
+    });
+    const ocAct = est.ocsDirectas.find((o) => o.id === oc.id)!;
+    try {
+      const buffer = await generarOCPdf(ocAct);
+      return {
+        pdf: {
+          buffer,
+          fileName: `OC-${ocAct.folio}-${ocAct.proveedor.replace(/[^\w]+/g, '_')}.pdf`,
+          caption: `✏️ Orden ${ocAct.folio} actualizada para ${ocAct.proveedor}.`,
+        },
+      };
+    } catch {
+      return { texto: `✏️ Orden ${ocAct.folio} actualizada. (No pude generar el PDF; ábrela en la app.)` };
+    }
+  }
+
   // Si ya hay una orden pendiente, un mensaje con intención de modificar la ajusta (agregar/quitar/cambiar).
   const pendActual = pendientes.get(jid);
   if (pendActual && REGEX_MODIFICA.test(texto)) {
