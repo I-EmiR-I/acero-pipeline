@@ -83,6 +83,7 @@ export type Accion =
   | {
       tipo: 'crear_oc_directa';
       proveedor: DatosProveedor;
+      proveedorId?: string;
       lineas: LineaOCEntrada[];
       folio?: string;
       noProveedor?: string;
@@ -268,7 +269,23 @@ export function reducer(estado: Estado, a: Accion): Estado {
       };
     }
     case 'crear_oc_directa': {
-      const folio = a.folio?.trim() || String(estado.folioSiguiente);
+      // Folio: 1) el que se indique explícito; 2) la secuencia propia del proveedor; 3) la global.
+      let folio: string;
+      let folioSiguiente = estado.folioSiguiente;
+      let proveedores = estado.proveedores;
+      const prov = a.proveedorId ? estado.proveedores.find((p) => p.id === a.proveedorId) : undefined;
+      if (a.folio?.trim()) {
+        folio = a.folio.trim();
+      } else if (prov) {
+        const siguiente = (prov.ultimoFolio ?? 0) + 1;
+        folio = String(siguiente);
+        proveedores = estado.proveedores.map((p) =>
+          p.id === prov.id ? { ...p, ultimoFolio: siguiente } : p
+        );
+      } else {
+        folio = String(folioSiguiente);
+        folioSiguiente += 1;
+      }
       const oc: OrdenCompra = {
         id: uid(),
         folio,
@@ -284,7 +301,8 @@ export function reducer(estado: Estado, a: Accion): Estado {
       return {
         ...estado,
         ocsDirectas: [oc, ...estado.ocsDirectas],
-        folioSiguiente: a.folio?.trim() ? estado.folioSiguiente : estado.folioSiguiente + 1,
+        folioSiguiente,
+        proveedores,
       };
     }
     case 'enviar_a_compras':

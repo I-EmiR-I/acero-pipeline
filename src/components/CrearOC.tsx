@@ -138,6 +138,7 @@ export function CrearOC({ onCreada }: { onCreada: (oc: OrdenCompra) => void }) {
     const nuevo = await dispatch({
       tipo: 'crear_oc_directa',
       proveedor: datos,
+      proveedorId: proveedorSel.id,
       noProveedor: proveedorSel.noProveedor,
       condicionesPago: proveedorSel.condicionesPago,
       nota: nota.trim() || undefined,
@@ -265,6 +266,21 @@ export function CrearOC({ onCreada }: { onCreada: (oc: OrdenCompra) => void }) {
                 <input value={provDraft.estado ?? ''} onChange={(e) => setProvDraft({ ...provDraft, estado: e.target.value })} />
               </div>
             </div>
+            <div className="campo">
+              <label>Último número de orden usado (la próxima OC será este + 1)</label>
+              <input
+                type="number"
+                min="0"
+                value={provDraft.ultimoFolio ?? ''}
+                onChange={(e) =>
+                  setProvDraft({
+                    ...provDraft,
+                    ultimoFolio: e.target.value === '' ? undefined : Number(e.target.value),
+                  })
+                }
+                placeholder="Ej. 100 → la próxima orden será 101"
+              />
+            </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button className="mini" onClick={() => setEditandoProv(false)}>
                 Cancelar
@@ -349,7 +365,11 @@ export function CrearOC({ onCreada }: { onCreada: (oc: OrdenCompra) => void }) {
                 <input
                   value={folio}
                   onChange={(e) => setFolio(e.target.value)}
-                  placeholder={`${estado.folioSiguiente} (automático)`}
+                  placeholder={
+                    proveedorSel && proveedorSel.ultimoFolio !== undefined
+                      ? `${proveedorSel.ultimoFolio + 1} (automático de ${proveedorSel.nombre})`
+                      : `${estado.folioSiguiente} (automático)`
+                  }
                 />
               </div>
               <div style={{ flex: 2 }}>

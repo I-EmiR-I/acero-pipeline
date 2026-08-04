@@ -72,6 +72,8 @@ export interface Proveedor extends DatosProveedor {
   condicionesPago?: string;
   /** Correo(s) del vendedor del proveedor (referencia; a futuro para enviarle la OC). */
   emailVendedor?: string;
+  /** Último número de orden usado con este proveedor; la próxima OC será este + 1. */
+  ultimoFolio?: number;
   /** Grupo de WhatsApp asociado a este proveedor, si aplica. */
   grupoJid?: string;
 }

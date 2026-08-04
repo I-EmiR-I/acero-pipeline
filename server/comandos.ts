@@ -67,6 +67,7 @@ export async function procesarComando(jid: string, texto: string): Promise<Respu
         estado: pend.proveedor.estado,
         pais: pend.proveedor.pais,
       },
+      proveedorId: pend.proveedor.id,
       noProveedor: pend.proveedor.noProveedor,
       condicionesPago: pend.proveedor.condicionesPago,
       lineas: pend.lineas.map((l) => ({
