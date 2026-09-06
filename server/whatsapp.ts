@@ -12,6 +12,7 @@ import QRCode from 'qrcode';
 import { registrarMensaje } from './monitor';
 import { procesarComando } from './comandos';
 import { obtenerEstado, DATA_DIR } from './estado';
+import { consultarPrecios, esGrupoPrecios } from './precios';
 
 // La sesión de WhatsApp vive en el volumen persistente (junto a estado.json) para sobrevivir redeploys.
 const AUTH_DIR = path.join(DATA_DIR, 'auth');
@@ -242,6 +243,15 @@ export async function iniciarWhatsApp(): Promise<void> {
             await enviarDocumento(jid, r.pdf.buffer, r.pdf.fileName, r.pdf.caption);
           }
           continue; // el grupo de comandos no alimenta al monitor de cotizaciones
+        }
+
+        // Grupo de precios: cerebro PuenteAcero-Precios (API aparte, fuera del contexto OC).
+        if (esGrupoPrecios(await nombreGrupo(jid))) {
+          const de = m.key.fromMe ? 'Tú' : m.pushName || m.key.participant || 'cliente';
+          console.log(`[precios] ${de}: ${texto.slice(0, 80)}`);
+          const respuesta = await consultarPrecios(texto);
+          await enviarMensaje(jid, respuesta);
+          continue; // el grupo de precios no alimenta al monitor de cotizaciones
         }
 
         // fromMe = lo escribió el número vinculado (el área de compras). Lo incluimos:
