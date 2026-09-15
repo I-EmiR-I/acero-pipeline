@@ -117,7 +117,7 @@ export function WhatsAppPanel() {
               <input
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
-                placeholder="Ej. 528112446576 (lada + número)"
+                placeholder="Ej. 5218112446576 (México: 52 + 1 + 10 dígitos)"
               />
               <button
                 onClick={pedirCodigo}
@@ -128,7 +128,8 @@ export function WhatsAppPanel() {
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 6 }}>
               El <strong>QR</strong> sirve para cualquier teléfono (incluidos Android viejos). El{' '}
-              <strong>código de número</strong> es una alternativa para teléfonos con esa opción.
+              <strong>código de número</strong> es una alternativa para teléfonos con esa opción; en
+              México el número va como <strong>521</strong> + 10 dígitos (ej. 5218112446576).
             </div>
           </div>
         )}
