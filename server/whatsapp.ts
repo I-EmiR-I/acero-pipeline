@@ -204,7 +204,8 @@ export async function iniciarWhatsApp(): Promise<void> {
         if (code === DisconnectReason.loggedOut) {
           conexion = 'desconectado';
           qrDataUrl = null;
-          ultimoError = 'Sesión cerrada desde el teléfono. Borra la carpeta server/auth y reinicia el servidor para volver a escanear.';
+          ultimoError =
+            'Sesión cerrada desde el teléfono. Usa los botones "Escanear QR" o "Vincular con número" aquí abajo para volver a conectar (no hace falta borrar nada a mano).';
         } else if (code === DisconnectReason.restartRequired) {
           // Normal justo después de escanear el QR: WhatsApp pide reiniciar el socket.
           console.log('[whatsapp] Reinicio requerido tras vincular; reconectando…');
